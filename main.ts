@@ -11,16 +11,36 @@ const io = new SocketIOServer(server);
 app.use(cors({ origin: '*' }));
 app.use(express.static('public'));
 
+//https://dribbble.com/shots/23835876-Fashion-Shopify-Template
+
 class User {
+    private name: string;
+    private room: string;
     private messages: string[];
 
     constructor(public id: string) {
         this.messages = [];
+        this.name = "";
+        this.room = "";
     }
 
     addMessage(message: string) {
         this.messages.push(message);
     }
+
+    setData({name, room}:any){
+        this.name = name;
+        this.room = room;
+    }
+
+    getName(): string{
+        return this.name
+    }
+
+    getRoom(): string{
+        return this.room || ''
+    }
+
 }
 
 class Persistence {
@@ -68,13 +88,23 @@ io.on('connection', (socket) => {
     session.save();
 
     console.log('A user connected');
-
-    socket.on('MESSAGE', (msg: string) => {
-        console.log('Message: ' + msg + '| id:' + socket.id);
-        session.findUser(socket.id)?.addMessage(msg)
+    
+    socket.on('JOIN', ({room, name}) => {
+        let user = session.findUser(socket.id);                
+        
+        socket.join(room);        
+        io.to(user?.getRoom() || '').emit('MESSAGE', { name: user?.getName(), type: 'Alert' });
+        session.findUser(socket.id)?.setData({name, room});                
         session.save()
-        io.emit('MESSAGE', { text: msg, client: socket.id });
+        
     });
+
+    socket.on("MESSAGEROOM",(msg: string) => {        
+        let user = session.findUser(socket.id);        
+        user?.addMessage(msg)
+        session.save()
+        io.to(user?.getRoom() || '').emit('MESSAGE', { text: msg, client: socket.id, name: user?.getName(), type: 'Message' });
+    })
 
     socket.on('disconnect', () => {
         console.log('User disconnected');
@@ -83,6 +113,6 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(3000, '10.3.58.27', () => {
+server.listen(3000, '10.3.41.20', () => {
     console.log(`Server is running on http://localhost:3000`);
 });
