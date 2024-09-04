@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "dev": "ts-node-dev main.ts"
+    "dev": "ts-node-dev main.ts",
+    "build": "tsc"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

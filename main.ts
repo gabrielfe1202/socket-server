@@ -18,6 +18,7 @@ class Message  {
         this.name = '';        
     }
 };
+
 class User {
     private name: string;
     private room: string;
